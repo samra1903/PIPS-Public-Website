@@ -1,0 +1,11 @@
+<?php
+require_once __DIR__.'/../includes/init.php';require_login();$page_title='Parent / Guardian Records';$error='';
+if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();$data=[];$data['full_name']=trim($_POST['full_name']??'');$data['phone']=trim($_POST['phone']??'');$data['email']=trim($_POST['email']??'');$data['relationship']=trim($_POST['relationship']??'');$data['address']=trim($_POST['address']??'');
+ try{$q=$pdo->prepare("INSERT INTO guardians (full_name,phone,email,relationship,address) VALUES (?,?,?,?,?)");$q->execute([$data['full_name'],$data['phone'],$data['email'],$data['relationship'],$data['address']]);flash('Parent / Guardian Records record saved.');go('guardians/index.php');}catch(Throwable $e){$error='Unable to save record. Check required fields and duplicate values.';}
+}
+$rows=$pdo->query("SELECT id,full_name,phone,email,relationship,address FROM guardians ORDER BY id DESC LIMIT 500")->fetchAll();
+require __DIR__.'/../includes/header.php';?>
+<h1>Parent / Guardian Records</h1><?php if($error):?><div class="notice error"><?=h($error)?></div><?php endif;?>
+<div class="panel"><h2>Add new record</h2><form method="post"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><div class="formgrid"><div><label>Guardian name</label><input type="text" name="full_name" required></div><div><label>Phone</label><input type="text" name="phone" required></div><div><label>Email</label><input type="email" name="email" ></div><div><label>Relationship</label><select name="relationship" required><option value="">Select</option><option value="Father">Father</option><option value="Mother">Mother</option><option value="Guardian">Guardian</option><option value="Other">Other</option></select></div><div><label>Address</label><input type="text" name="address" ></div></div><button>Save record</button></form></div>
+<div class="panel"><h2>Records</h2><div class="tablewrap"><table><tr><th>Guardian name</th><th>Phone</th><th>Email</th><th>Relationship</th><th>Address</th></tr><?php foreach($rows as $r):?><tr><td><?=h($r["full_name"])?></td><td><?=h($r["phone"])?></td><td><?=h($r["email"])?></td><td><?=h($r["relationship"])?></td><td><?=h($r["address"])?></td></tr><?php endforeach;?><?php if(!$rows):?><tr><td colspan="5">No records found.</td></tr><?php endif;?></table></div></div>
+<?php require __DIR__.'/../includes/footer.php';?>

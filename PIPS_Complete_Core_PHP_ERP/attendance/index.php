@@ -1,0 +1,10 @@
+<?php
+require_once __DIR__.'/../includes/init.php';require_login();$page_title='Student Attendance';$msg='';
+$students=$pdo->query("SELECT id,admission_no,full_name FROM students WHERE status='active' ORDER BY full_name")->fetchAll();
+if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();$date=$_POST['attendance_date']??date('Y-m-d');$statuses=$_POST['status']??[];
+try{$pdo->beginTransaction();$q=$pdo->prepare('INSERT INTO student_attendance(student_id,attendance_date,status,marked_by) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE status=VALUES(status),marked_by=VALUES(marked_by)');
+foreach($statuses as $sid=>$st){if(in_array($st,['present','absent','late','leave'],true))$q->execute([(int)$sid,$date,$st,$_SESSION['user_id']]);}$pdo->commit();flash('Attendance saved.');go('attendance/index.php');}catch(Throwable $e){$pdo->rollBack();$msg='Attendance could not be saved.';}}
+$selected=$_GET['date']??date('Y-m-d');$q=$pdo->prepare('SELECT student_id,status FROM student_attendance WHERE attendance_date=?');$q->execute([$selected]);$existing=[];foreach($q as $r)$existing[$r['student_id']]=$r['status'];
+require __DIR__.'/../includes/header.php';?><h1>Student Attendance</h1><?php if($msg):?><div class="notice error"><?=h($msg)?></div><?php endif;?>
+<div class="panel"><form method="get"><label>Attendance date</label><input type="date" name="date" value="<?=h($selected)?>"><button>Load date</button></form></div>
+<form method="post"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="attendance_date" value="<?=h($selected)?>"><div class="panel"><div class="tablewrap"><table><tr><th>Admission #</th><th>Student</th><th>Status</th></tr><?php foreach($students as $s):?><tr><td><?=h($s['admission_no'])?></td><td><?=h($s['full_name'])?></td><td><select name="status[<?=$s['id']?>]"><?php foreach(['present','absent','late','leave'] as $st):?><option value="<?=$st?>" <?=($existing[$s['id']]??'present')===$st?'selected':''?>><?=ucfirst($st)?></option><?php endforeach;?></select></td></tr><?php endforeach;?></table></div><button>Save attendance</button></div></form><?php require __DIR__.'/../includes/footer.php';?>

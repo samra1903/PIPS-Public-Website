@@ -1,0 +1,1 @@
+<?php require_once __DIR__.'/includes/init.php'; go(logged_in()?'dashboard.php':'login.php');

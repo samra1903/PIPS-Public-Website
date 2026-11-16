@@ -1,0 +1,11 @@
+<?php
+require_once __DIR__.'/../includes/init.php';require_login();$page_title='Examinations';$error='';
+if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();$data=[];$data['exam_name']=trim($_POST['exam_name']??'');$data['academic_year']=trim($_POST['academic_year']??'');$data['start_date']=trim($_POST['start_date']??'');$data['end_date']=trim($_POST['end_date']??'');$data['status']=trim($_POST['status']??'');
+ try{$q=$pdo->prepare("INSERT INTO examinations (exam_name,academic_year,start_date,end_date,status) VALUES (?,?,?,?,?)");$q->execute([$data['exam_name'],$data['academic_year'],$data['start_date'],$data['end_date'],$data['status']]);flash('Examinations record saved.');go('examinations/index.php');}catch(Throwable $e){$error='Unable to save record. Check required fields and duplicate values.';}
+}
+$rows=$pdo->query("SELECT id,exam_name,academic_year,start_date,end_date,status FROM examinations ORDER BY id DESC LIMIT 500")->fetchAll();
+require __DIR__.'/../includes/header.php';?>
+<h1>Examinations</h1><?php if($error):?><div class="notice error"><?=h($error)?></div><?php endif;?>
+<div class="panel"><h2>Add new record</h2><form method="post"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><div class="formgrid"><div><label>Exam name</label><input type="text" name="exam_name" required></div><div><label>Academic year</label><input type="text" name="academic_year" required></div><div><label>Start date</label><input type="date" name="start_date" ></div><div><label>End date</label><input type="date" name="end_date" ></div><div><label>Status</label><select name="status" required><option value="">Select</option><option value="planned">planned</option><option value="ongoing">ongoing</option><option value="completed">completed</option></select></div></div><button>Save record</button></form></div>
+<div class="panel"><h2>Records</h2><div class="tablewrap"><table><tr><th>Exam name</th><th>Academic year</th><th>Start date</th><th>End date</th><th>Status</th></tr><?php foreach($rows as $r):?><tr><td><?=h($r["exam_name"])?></td><td><?=h($r["academic_year"])?></td><td><?=h($r["start_date"])?></td><td><?=h($r["end_date"])?></td><td><?=h($r["status"])?></td></tr><?php endforeach;?><?php if(!$rows):?><tr><td colspan="5">No records found.</td></tr><?php endif;?></table></div></div>
+<?php require __DIR__.'/../includes/footer.php';?>

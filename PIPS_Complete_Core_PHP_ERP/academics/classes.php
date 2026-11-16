@@ -1,0 +1,11 @@
+<?php
+require_once __DIR__.'/../includes/init.php';require_login();$page_title='Classes & Sections';$error='';
+if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();$data=[];$data['class_name']=trim($_POST['class_name']??'');$data['section_name']=trim($_POST['section_name']??'');$data['academic_year']=trim($_POST['academic_year']??'');$data['room_no']=trim($_POST['room_no']??'');
+ try{$q=$pdo->prepare("INSERT INTO school_classes (class_name,section_name,academic_year,room_no) VALUES (?,?,?,?)");$q->execute([$data['class_name'],$data['section_name'],$data['academic_year'],$data['room_no']]);flash('Classes & Sections record saved.');go('school_classes/index.php');}catch(Throwable $e){$error='Unable to save record. Check required fields and duplicate values.';}
+}
+$rows=$pdo->query("SELECT id,class_name,section_name,academic_year,room_no FROM school_classes ORDER BY id DESC LIMIT 500")->fetchAll();
+require __DIR__.'/../includes/header.php';?>
+<h1>Classes & Sections</h1><?php if($error):?><div class="notice error"><?=h($error)?></div><?php endif;?>
+<div class="panel"><h2>Add new record</h2><form method="post"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><div class="formgrid"><div><label>Class name</label><input type="text" name="class_name" required></div><div><label>Section</label><input type="text" name="section_name" required></div><div><label>Academic year</label><input type="text" name="academic_year" required></div><div><label>Room number</label><input type="text" name="room_no" ></div></div><button>Save record</button></form></div>
+<div class="panel"><h2>Records</h2><div class="tablewrap"><table><tr><th>Class name</th><th>Section</th><th>Academic year</th><th>Room number</th></tr><?php foreach($rows as $r):?><tr><td><?=h($r["class_name"])?></td><td><?=h($r["section_name"])?></td><td><?=h($r["academic_year"])?></td><td><?=h($r["room_no"])?></td></tr><?php endforeach;?><?php if(!$rows):?><tr><td colspan="4">No records found.</td></tr><?php endif;?></table></div></div>
+<?php require __DIR__.'/../includes/footer.php';?>

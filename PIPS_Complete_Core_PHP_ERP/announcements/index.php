@@ -1,0 +1,11 @@
+<?php
+require_once __DIR__.'/../includes/init.php';require_login();$page_title='Announcements';$error='';
+if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();$data=[];$data['title']=trim($_POST['title']??'');$data['message']=trim($_POST['message']??'');$data['publish_date']=trim($_POST['publish_date']??'');$data['audience']=trim($_POST['audience']??'');
+ try{$q=$pdo->prepare("INSERT INTO announcements (title,message,publish_date,audience) VALUES (?,?,?,?)");$q->execute([$data['title'],$data['message'],$data['publish_date'],$data['audience']]);flash('Announcements record saved.');go('announcements/index.php');}catch(Throwable $e){$error='Unable to save record. Check required fields and duplicate values.';}
+}
+$rows=$pdo->query("SELECT id,title,message,publish_date,audience FROM announcements ORDER BY id DESC LIMIT 500")->fetchAll();
+require __DIR__.'/../includes/header.php';?>
+<h1>Announcements</h1><?php if($error):?><div class="notice error"><?=h($error)?></div><?php endif;?>
+<div class="panel"><h2>Add new record</h2><form method="post"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><div class="formgrid"><div><label>Title</label><input type="text" name="title" required></div><div><label>Message</label><input type="text" name="message" required></div><div><label>Publish date</label><input type="date" name="publish_date" required></div><div><label>Audience</label><select name="audience" required><option value="">Select</option><option value="all">all</option><option value="students">students</option><option value="parents">parents</option><option value="staff">staff</option></select></div></div><button>Save record</button></form></div>
+<div class="panel"><h2>Records</h2><div class="tablewrap"><table><tr><th>Title</th><th>Message</th><th>Publish date</th><th>Audience</th></tr><?php foreach($rows as $r):?><tr><td><?=h($r["title"])?></td><td><?=h($r["message"])?></td><td><?=h($r["publish_date"])?></td><td><?=h($r["audience"])?></td></tr><?php endforeach;?><?php if(!$rows):?><tr><td colspan="4">No records found.</td></tr><?php endif;?></table></div></div>
+<?php require __DIR__.'/../includes/footer.php';?>
